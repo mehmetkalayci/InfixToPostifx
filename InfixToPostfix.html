@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Infix to Postfix Homework</title>
+</head>
+<body>
+    <div><input type="text" id="input" value=" ( ( 2 + 1 ) *2 ) ^ ( 8 - 5 )" /></div>
+	<div id="output">Output:<br /></div>
+		<script type="text/javascript">
+
+		function Stack() {
+			this.stack = new Array();
+
+			this.pop = function() {
+				return this.stack.pop();
+			}
+
+			this.push = function(item) {
+				this.stack.push(item);
+			}
+
+			this.peek = function() {
+				return this.stack[this.stack.length-1];
+			}
+
+			this.isEmpty = function() {
+				return this.stack.length == 0;
+			}
+		}
+
+
+
+		function InfixToPostfix() {
+			this.operatorStack = new Stack();
+			this.infixExpression = "";
+			this.postFixExpression = "";
+
+			this.write = function(msg) {
+				var div = document.getElementById('output');
+				div.innerHTML = div.innerHTML + msg + ' Postfix= ' + this.postFixExpression + '<br />';
+			}
+
+			this.isOperator = function(chr) {
+				return (chr == '+' || chr == '-' || chr == '*' || chr == '/' || chr == '^');
+			}
+
+			this.getPriority = function(operator) {
+				switch (operator) {
+					case '^': return 3;
+					case '*': case '/': return 2;
+					case '+': case '-': return 1;
+				}
+			}
+
+			this.checkPrecedence = function(op1, op2) {
+				if (this.getPriority(op1) <= this.getPriority(op2)) {
+					return true;
+				}
+			}
+
+			var tokenIndex = 0;
+			this.getNextToken = function (infixExpr) {
+
+                while (tokenIndex < infixExpr.length && infixExpr[tokenIndex] == ' ') tokenIndex++;
+                if (tokenIndex == infixExpr.length) return '';
+
+                var b = '';
+                while (tokenIndex < infixExpr.length && infixExpr[tokenIndex] != ' ' && infixExpr[tokenIndex] != '(' && infixExpr[tokenIndex] != ')' && !this.isOperator(infixExpr[tokenIndex])) b += infixExpr[tokenIndex++];
+                if (b != '') return b;
+
+                return infixExpr[tokenIndex++];
+            };
+
+			this.convertToPostfix = function(infixExpr) {
+				var chr;
+				while((chr = this.getNextToken(infixExpr)) != '') {
+
+					if (chr == '(') {
+						// Açılış parantezi direkt stacke atıldı
+						this.operatorStack.push(chr);
+						this.write(chr + " stacke atıldı.");
+					}
+					else if (chr == ')') {
+						// Açılış parantezi bulunana kadar ilerle
+						this.write(chr + " stackten alındı.");
+					    while(this.operatorStack.peek() != '(' && !this.operatorStack.isEmpty()) {
+					    	var temp = this.operatorStack.pop();
+					    	this.postFixExpression += " " + temp;
+					    	this.write(temp + " stackten alındı, postfixe atıldı.");
+					    }
+					    var temp = this.operatorStack.pop();
+					    this.write(temp + " stackten alındı.");
+					}
+					else if (this.isOperator(chr)) {
+
+						while(this.checkPrecedence(chr, this.operatorStack.peek())) {
+							var temp = this.operatorStack.pop();
+							this.postFixExpression += " " + temp;
+							this.write(temp + " stackten alındı, postfixe atıldı.");
+						}
+						this.operatorStack.push(chr);
+						this.write(chr + " stacke atıldı.");
+					}
+
+					else {
+						// Operand gelirse postfixe at
+						this.postFixExpression += " " + chr;
+						this.write(chr + " postfixe atıldı.");
+					}
+				}
+
+				while(this.operatorStack.peek() != null){
+					var temp = this.operatorStack.pop();
+					this.postFixExpression += " " + temp;
+					this.write(temp + " stackten alındı, postfixe atıldı.");
+				}
+
+				return this.postFixExpression;
+			}
+		}
+
+
+		function PostfixCalculator() {
+			this.operatorStack = new Stack();
+			this.operandStack = new Stack();
+
+			this.init = function(postFixExpr) {
+				var postfixItems = postFixExpr.trim().split(' ');
+				for (var i = 0; i < postfixItems.length; i++) {
+					var chr = postfixItems[i];
+					if (chr == '+' || chr == '-' || chr == '*' || chr == '/' || chr == '^') {
+						this.operatorStack.push(chr);
+					}
+					else{
+						this.operandStack.push(chr);
+					}
+				}
+			}
+
+            this.sum = function () {
+                var result = parseFloat(this.operandStack.stack[this.operandStack.stack.length - 2]) + parseFloat(this.operandStack.stack[this.operandStack.stack.length - 1])
+                this.operandStack.stack.pop();
+                this.operandStack.stack[this.operandStack.stack.length - 1] = result;
+            }
+
+            this.subtract = function() {
+                var result = parseFloat(this.operandStack.stack[this.operandStack.stack.length - 2]) - parseFloat(this.operandStack.stack[this.operandStack.stack.length - 1])
+                this.operandStack.stack.pop();
+                this.operandStack.stack[this.operandStack.stack.length - 1] = result;
+            }
+
+            this.divide = function() {
+                var result = parseFloat(this.operandStack.stack[this.operandStack.stack.length - 2]) / parseFloat(this.operandStack.stack[this.operandStack.stack.length - 1])
+                this.operandStack.stack.pop();
+                this.operandStack.stack[this.operandStack.stack.length - 1] = result;
+            }
+
+            this.multiply = function() {
+                var result = parseFloat(this.operandStack.stack[this.operandStack.stack.length - 2]) * parseFloat(this.operandStack.stack[this.operandStack.stack.length - 1])
+                this.operandStack.stack.pop();
+                this.operandStack.stack[this.operandStack.stack.length - 1] = result;
+            }
+
+            this.power = function() {
+                var result = Math.pow(parseFloat(this.operandStack.stack[this.operandStack.stack.length - 2]), parseFloat(this.operandStack.stack[this.operandStack.stack.length - 1]))
+                this.operandStack.stack.pop();
+                this.operandStack.stack[this.operandStack.stack.length - 1] = result;
+            }
+
+            this.calculate = function(postFixExpr) {
+                this.init(postFixExpr);
+                for (var i = 0; i <= this.operatorStack.stack.length - 1; i++) {
+                    switch (this.operatorStack.stack[i]) {
+                        case '+': this.sum(); break;
+                        case '-': this.subtract(); break;
+                        case '/': this.divide(); break;
+                        case '*': this.multiply(); break;
+                        case '^': this.power(); break;
+					}
+                }
+                return this.operandStack.stack[0];
+			}
+		}
+
+        document.getElementById("input").onkeypress = function (e) {
+            if (e.keyCode == 13) {
+                document.getElementById("output").innerHTML = "Output:<br />";
+                var infixToPostfixConverter = new InfixToPostfix();
+                var pfCalculator = new PostfixCalculator();
+
+                var postFixExpression = infixToPostfixConverter.convertToPostfix(document.getElementById("input").value);
+                alert(pfCalculator.calculate(postFixExpression));
+            }
+        }
+	</script>
+</body>
+</html>
